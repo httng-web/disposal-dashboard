@@ -272,55 +272,22 @@ function kpiCardsOverview(o) {
 
 // ── overall drill-down WITHOUT GMV column ──
 function dmSummaryTableNoGMV() {
-  let h = '<div class="card"><div class="card-h"><h2>By Shop</h2><span class="note">只顯示 Disposal 數據，不顯示 GMV</span></div><div class="tbl-wrap"><table>'
-    + '<tr><th>DM / AM / Shop</th><th class="num">Shops</th>'
-    + '<th class="num">累積 Disposal</th><th class="num">Budget</th><th class="num">剩餘</th><th class="num">剩餘每日</th><th class="num">預計月底</th><th class="num">Rate</th><th>狀態</th><th>行動</th><th></th></tr>';
-  const allShops = DATA.districts.flatMap(d => d.ams.flatMap(a => a.shops));
-  h += '<tr class="gt"><td>All Districts (Total)</td><td class="num">' + DATA.meta.shopCount + '</td>'
-    + '<td class="num">' + fmt$(DATA.grand.total) + '</td>'
-    + '<td class="num">' + fmt$(DATA.grand.budget || 0) + '</td>'
-    + '<td class="num ' + ((DATA.grand.budget||0) - DATA.grand.total < 0 ? 'v-red' : 'v-green') + '">' + fmt$((DATA.grand.budget||0) - DATA.grand.total) + '</td>'
-    + '<td class="num">' + fmt$(sumDailyCap(allShops)) + '</td>'
-    + '<td class="num">' + fmt$(sumProjMonthDisp(allShops)) + '</td>'
-    + '<td class="num ' + rateCls(DATA.grand.rate) + '">' + fmtP(DATA.grand.rate) + '</td>'
-    + '<td>' + (DATA.grand.overCount ? '<span class="pill p-danger">' + DATA.grand.overCount + ' 已超</span>' : '<span class="pill p-ok">ALL OK</span>') + '</td><td></td><td></td></tr>';
+  let h = '<div class="card"><div class="card-h"><h2>By Shop</h2></div><div class="tbl-wrap"><table>'
+    + '<tr><th>DM / AM / Shop</th><th class="num">Disposal Rate</th></tr>';
   DATA.districts.forEach((d, di) => {
     const detId = 'ov-dmdet-' + di;
-    const dShops = d.ams.flatMap(a => a.shops);
-    h += '<tr class="dmrow" onclick="tog(\'' + detId + '\')"><td>▸ ' + d.dm + '</td><td class="num">' + d.shopCount + '</td>'
-      + '<td class="num">' + fmt$(d.total) + '</td>'
-      + '<td class="num">' + fmt$(d.budget || 0) + '</td>'
-      + '<td class="num ' + ((d.budget||0) - d.total < 0 ? 'v-red' : 'v-green') + '">' + fmt$((d.budget||0) - d.total) + '</td>'
-      + '<td class="num">' + fmt$(sumDailyCap(dShops)) + '</td>'
-      + '<td class="num">' + fmt$(sumProjMonthDisp(dShops)) + '</td>'
-      + '<td class="num ' + rateCls(d.rate) + '">' + fmtP(d.rate) + '</td>'
-      + '<td>' + (d.overCount ? '<span class="pill p-danger">' + d.overCount + ' 已超</span>' : '<span class="pill p-ok">OK</span>') + '</td><td></td><td></td></tr>';
-    h += '<tr class="hidden" id="' + detId + '"><td colspan="11" style="padding:0;"><table>';
+    h += '<tr class="dmrow" onclick="tog('' + detId + '')"><td>▸ ' + d.dm + '</td>'
+      + '<td class="num ' + rateCls(d.rate) + '">' + fmtP(d.rate) + '</td></tr>';
+    h += '<tr class="hidden" id="' + detId + '"><td colspan="2" style="padding:0;"><table>';
     d.ams.forEach((a, ai) => {
       const amDet = detId + '-am-' + ai;
-      h += '<tr class="amrow" onclick="tog(\'' + amDet + '\')"><td style="padding-left:28px;">↳ ' + a.am + '</td><td class="num">' + a.shopCount + '</td>'
-        + '<td class="num">' + fmt$(a.total) + '</td>'
-        + '<td class="num">' + fmt$(a.budget || 0) + '</td>'
-        + '<td class="num ' + ((a.budget||0) - a.total < 0 ? 'v-red' : 'v-green') + '">' + fmt$((a.budget||0) - a.total) + '</td>'
-        + '<td class="num">' + fmt$(sumDailyCap(a.shops)) + '</td>'
-        + '<td class="num">' + fmt$(sumProjMonthDisp(a.shops)) + '</td>'
-        + '<td class="num ' + rateCls(a.rate) + '">' + fmtP(a.rate) + '</td>'
-        + '<td>' + (a.overCount ? '<span class="pill p-danger">' + a.overCount + '</span>' : '<span class="pill p-ok">OK</span>') + '</td><td></td><td></td></tr>';
-      h += '<tr class="hidden" id="' + amDet + '"><td colspan="11" style="padding:0;"><table>';
+      h += '<tr class="amrow" onclick="tog('' + amDet + '')"><td style="padding-left:28px;">↳ ' + a.am + '</td>'
+        + '<td class="num ' + rateCls(a.rate) + '">' + fmtP(a.rate) + '</td></tr>';
+      h += '<tr class="hidden" id="' + amDet + '"><td colspan="2" style="padding:0;"><table>';
       sortShops(a.shops).forEach(s => {
-        const shDet = amDet + '-sh-' + s.code;
         const sCls = statusClass(s.status);
-        const p = s.proj;
-        h += '<tr class="shop-row ' + sCls + '"><td style="padding-left:48px;">' + s.code + ' · ' + s.name + '</td><td class="num mini">—</td>'
-          + '<td class="num">' + (p ? fmt$(p.mtdDisp) : '—') + '</td>'
-          + '<td class="num">' + (p ? fmt$(p.monthBudget) : '—') + '</td>'
-          + '<td class="num ' + (p && p.remaining < 0 ? 'v-red' : '') + '">' + (p ? fmt$(p.remaining) : '—') + '</td>'
-          + '<td class="num">' + (p ? fmt$(p.dailyBudget) : '—') + '</td>'
-          + '<td class="num">' + (p ? fmt$(p.projMonthDisp) : '—') + '</td>'
-          + '<td class="num ' + rateCls(s.rate) + '">' + fmtP(s.rate) + '</td><td>' + pill(s.status) + '</td>'
-          + actionCell(s)
-          + '<td><button class="exp-btn" onclick="tog(event,\'' + shDet + '\')">…</button></td></tr>';
-        h += detailRow(shDet, s, 48, 11);
+        h += '<tr class="shop-row ' + sCls + '"><td style="padding-left:48px;">' + s.code + ' · ' + s.name + '</td>'
+          + '<td class="num ' + rateCls(s.rate) + '">' + fmtP(s.rate) + '</td></tr>';
       });
       h += '</table></td></tr>';
     });
